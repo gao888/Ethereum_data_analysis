@@ -1,4 +1,7 @@
 # jupyter notebook
 *.ipynb
+
+#other
 .vscode/settings.json
 __pycache__/ethscrap.cpython-37.pyc
+*.txt
