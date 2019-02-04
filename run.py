@@ -3,9 +3,5 @@ import os
 import pickle
 
 
-token=''
-
-def main():
-    hashlist=es.get_hash_all(token)
-    for hash in hashlist:
-
+a=es.get_tx('0xe313c3c137f1b4cf049bda47b7f94ad63a076d9b1f068360727063ec53fa881e')
+print(a)
