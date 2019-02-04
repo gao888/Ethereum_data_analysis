@@ -3,6 +3,8 @@ import re
 from bs4 import BeautifulSoup
 import time
 import random
+from ip_pool import ip_pool
+import pandas as pd
 
 def get_pages(token):
     url='https://etherscan.io/token/generic-tokentxns2?contractAddress='+token+'&mode=&p=1'
@@ -15,7 +17,8 @@ def get_pages(token):
 
 def get_hash_page(token,page): 
     url='https://etherscan.io/token/generic-tokentxns2?contractAddress='+token+'&mode=&p='+str(page)
-    r= requests.get(url)
+    proxies=ip_proxy()
+    r= requests.get(url,proxies=proxies)
     text=r.text
     soup = BeautifulSoup(text,features="lxml")
     table = soup.find('table')
@@ -29,6 +32,12 @@ def get_hash_page(token,page):
         return txhashs
     else:
         return('finish all hash')
+
+def ip_proxy():
+    ip = ip_pool[random.randrange(0,len(ip_pool))]
+    proxy_ip = 'http://'+ip
+    proxies = {'http':proxy_ip}
+    return proxies
 
 def get_hash_all(token):
     pages_raw=get_pages(token)
@@ -59,16 +68,25 @@ def find_time(soup):
     return time_list[0:2]
 
 def find_trans(soup):       
-    trans_raw=soup.find('span',attrs={'class':'row-count'}).text
-    fr_loc=trans_raw.find('From')
-    to_loc=trans_raw.find('To')
-    am_loc=trans_raw.find('for')
-    end_loc=trans_raw.find('(')
-    From=trans_raw[fr_loc+4:to_loc].replace(' ','')
-    to=trans_raw[to_loc+2:am_loc].replace(' ','')
-    amount=trans_raw[am_loc+5:end_loc].replace(' ','')
-    result=[From,to,amount]
-    return result
+    trans_raws=soup.find_all('span',attrs={'class':'row-count'})
+    headers=['From','to','amount']
+    trans_table=[]
+    re_address = re.compile(r'>[a-zA-Z0-9]{42}</a>')
+    for trans_raw in trans_raws:
+        trans_raw=str(trans_raw)
+        fr_loc=trans_raw.find('From')
+        to_loc=trans_raw.find('To')
+        am_loc=trans_raw.find('for')
+        end_loc=trans_raw.find('(')
+        from_r=trans_raw[fr_loc+4:to_loc]
+        to_r=trans_raw[to_loc+2:am_loc]
+        From=re_address.search(from_r).group()[1:-4]
+        to=re_address.search(to_r).group()[1:-4]
+        amount=trans_raw[am_loc+5:end_loc].replace(' ','')
+        result=[From,to,amount]
+        trans_table.append(result)
+    df = pd.DataFrame(trans_table, columns=headers)    
+    return df
 
 def get_tx(txhash):
     url_tx='https://etherscan.io/tx/'+txhash
@@ -77,4 +95,6 @@ def get_tx(txhash):
     soup = BeautifulSoup(text,features="lxml")
     trans=find_trans(soup)
     time=find_time(soup)
-    return trans+time
+    trans.loc[:,'date']=time[0]
+    trans.loc[:,'hms']=time[1]
+    return trans
