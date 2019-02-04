@@ -6,5 +6,5 @@
 __pycache__/ethscrap.cpython-37.pyc
 *.txt
 ip_pool.py
-run.py
 __pycache__/ip_pool.cpython-37.pyc
+run.py
