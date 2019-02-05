@@ -7,5 +7,6 @@
 *.csv
 *.pickle
 *.txt
-ip_pool.py
 __pycache__/ip_pool.cpython-37.pyc
+util/ua_pool.py
+util/ip_pool.py
