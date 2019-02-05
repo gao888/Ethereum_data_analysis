@@ -32,10 +32,10 @@ def get_hash_page(token,page):
 
 def get_hash_all(token):
     pages_raw=get_pages(token)
-    pages=int(pages_raw)+2
+    pages=int(pages_raw)+3
     print(pages)
     total=[]
-    for page in range(pages):
+    for page in range(pages)[1:]:
         print(str(page)+'/'+str(pages))
         a=get_hash_page(token,page)
         if type(a) is str:
