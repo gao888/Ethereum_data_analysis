@@ -19,7 +19,6 @@ def loadlist(name):
 def month2num(ethtime):
     month={'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06',
     'Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'}
-    print(ethtime)
     mon=month[ethtime[0:3]]
     year=ethtime[7:]
     day=ethtime[4:6]
@@ -28,7 +27,7 @@ def month2num(ethtime):
     date=joiner.join(date_row)
     return date
 
-def adjust_txdata(txdata,token):
+def adjust_txdata(txdata,token_address):
     txdata['date']=txdata['date'].map(month2num)
     txdata2=txdata[txdata.token==token_address]
     return txdata2

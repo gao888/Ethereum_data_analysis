@@ -2,7 +2,7 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import pandas as pd
-import requests_util as requests_u
+from util import requests_util as requests_u
 
 def get_pages(token):
     url='https://etherscan.io/token/generic-tokentxns2?contractAddress='+token+'&mode=&p=1'
