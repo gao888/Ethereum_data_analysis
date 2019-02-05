@@ -1,19 +1,8 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-import time
-import random
-from ip_pool import ip_pool
 import pandas as pd
-
-def anti_requests():
-    ip = ip_pool[random.randrange(0,len(ip_pool))]
-    proxy_ip = 'http://'+ip
-    
-    proxies = {'http':proxy_ip}
-    r= requests.get(url,proxies=proxies)
-    return r
-
+import requests_util as requests_u
 
 def get_pages(token):
     url='https://etherscan.io/token/generic-tokentxns2?contractAddress='+token+'&mode=&p=1'
@@ -26,8 +15,7 @@ def get_pages(token):
 
 def get_hash_page(token,page): 
     url='https://etherscan.io/token/generic-tokentxns2?contractAddress='+token+'&mode=&p='+str(page)
-    proxies=ip_proxy()
-    r= requests.get(url,proxies=proxies)
+    r= requests_u.get(url)
     text=r.text
     soup = BeautifulSoup(text,features="lxml")
     table = soup.find('table')
@@ -50,8 +38,6 @@ def get_hash_all(token):
     for page in range(pages):
         print(str(page)+'/'+str(pages))
         a=get_hash_page(token,page)
-        second=random.randint(1,5)
-        time.sleep(0.1*second)
         if type(a) is str:
             print(a)
         else:
@@ -96,8 +82,7 @@ def find_trans(soup):
 
 def get_tx(txhash):
     url_tx='https://etherscan.io/tx/'+txhash
-    proxies=ip_proxy()
-    tx= requests.get(url_tx,proxies=proxies)
+    tx= requests_u.get(url_tx)
     text=tx.text
     soup = BeautifulSoup(text,features="lxml")
     trans=find_trans(soup)
