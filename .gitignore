@@ -1,10 +1,11 @@
 # jupyter notebook
 *.ipynb
+*.pyc
 
 #other
 .vscode/settings.json
-__pycache__/ethscrap.cpython-37.pyc
+*.csv
+*.pickle
 *.txt
 ip_pool.py
 __pycache__/ip_pool.cpython-37.pyc
-run.py

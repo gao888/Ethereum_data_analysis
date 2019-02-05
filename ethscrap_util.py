@@ -6,6 +6,15 @@ import random
 from ip_pool import ip_pool
 import pandas as pd
 
+def anti_requests():
+    ip = ip_pool[random.randrange(0,len(ip_pool))]
+    proxy_ip = 'http://'+ip
+    
+    proxies = {'http':proxy_ip}
+    r= requests.get(url,proxies=proxies)
+    return r
+
+
 def get_pages(token):
     url='https://etherscan.io/token/generic-tokentxns2?contractAddress='+token+'&mode=&p=1'
     r_t= requests.get(url)
@@ -33,12 +42,6 @@ def get_hash_page(token,page):
     else:
         return('finish all hash')
 
-def ip_proxy():
-    ip = ip_pool[random.randrange(0,len(ip_pool))]
-    proxy_ip = 'http://'+ip
-    proxies = {'http':proxy_ip}
-    return proxies
-
 def get_hash_all(token):
     pages_raw=get_pages(token)
     pages=int(pages_raw)+2
@@ -53,6 +56,7 @@ def get_hash_all(token):
             print(a)
         else:
             total=total+a
+    total=list(set(total))
     return total
 
 def find_time(soup):
@@ -80,9 +84,11 @@ def find_trans(soup):
         end_loc=trans_raw.find('(')
         from_r=trans_raw[fr_loc+4:to_loc]
         to_r=trans_raw[to_loc+2:am_loc]
+        amount_r=trans_raw[am_loc+5:end_loc]
         From=re_address.search(from_r).group()[1:-4]
         to=re_address.search(to_r).group()[1:-4]
-        amount=trans_raw[am_loc+5:end_loc].replace(' ','')
+        amount=re.match(r'[0-9,]*',amount_r, flags=0).group().replace(',','')
+        print(amount)
         result=[From,to,amount]
         trans_table.append(result)
     df = pd.DataFrame(trans_table, columns=headers)    
@@ -90,7 +96,8 @@ def find_trans(soup):
 
 def get_tx(txhash):
     url_tx='https://etherscan.io/tx/'+txhash
-    tx= requests.get(url_tx)
+    proxies=ip_proxy()
+    tx= requests.get(url_tx,proxies=proxies)
     text=tx.text
     soup = BeautifulSoup(text,features="lxml")
     trans=find_trans(soup)
@@ -98,3 +105,4 @@ def get_tx(txhash):
     trans.loc[:,'date']=time[0]
     trans.loc[:,'hms']=time[1]
     return trans
+
