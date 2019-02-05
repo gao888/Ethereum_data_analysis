@@ -73,8 +73,7 @@ def find_trans(soup):
         amount_r=trans_raw[am_loc+5:end_loc]
         From=re_address.search(from_r).group()[1:-4]
         to=re_address.search(to_r).group()[1:-4]
-        amount=re.match(r'[0-9,]*',amount_r, flags=0).group().replace(',','')
-        print(amount)
+        amount=re.match(r'[0-9,.]*',amount_r, flags=0).group().replace(',','')
         result=[From,to,amount]
         trans_table.append(result)
     df = pd.DataFrame(trans_table, columns=headers)    
