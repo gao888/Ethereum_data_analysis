@@ -59,7 +59,7 @@ def find_time(soup):
 
 def find_trans(soup):       
     trans_raws=soup.find_all('span',attrs={'class':'row-count'})
-    headers=['From','to','amount']
+    headers=['From','to','amount','token']
     trans_table=[]
     re_address = re.compile(r'>[a-zA-Z0-9]{42}</a>')
     for trans_raw in trans_raws:
@@ -74,7 +74,8 @@ def find_trans(soup):
         From=re_address.search(from_r).group()[1:-4]
         to=re_address.search(to_r).group()[1:-4]
         amount=re.match(r'[0-9,.]*',amount_r, flags=0).group().replace(',','')
-        result=[From,to,amount]
+        token=re.search(r'token/[a-zA-Z0-9]{42}',trans_raw, flags=0).group()[6:]
+        result=[From,to,amount,token]
         trans_table.append(result)
     df = pd.DataFrame(trans_table, columns=headers)    
     return df
