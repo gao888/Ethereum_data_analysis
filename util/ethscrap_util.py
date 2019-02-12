@@ -59,7 +59,7 @@ def find_time(soup):
 
 def find_trans(soup):       
     trans_raws=soup.find_all('span',attrs={'class':'row-count'})
-    headers=['From','to','amount','token']
+    headers=['from','to','amount','token']
     trans_table=[]
     re_address = re.compile(r'>[a-zA-Z0-9]{42}</a>')
     for trans_raw in trans_raws:
