@@ -17,7 +17,8 @@ path=os.getcwd()
 
 def savecsv(data,name):
     global path
-    data.to_csv(path+'\\save\\'+name+'.csv',sep=',',index=False)
-    print('finish save')
+    file_path=path+'\\save\\'+name+'.csv'
+    data.to_csv(file_path,sep=',',index=False)
+    print('save to {}'.format(file_path))
 
 
