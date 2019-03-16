@@ -11,6 +11,6 @@ def get(url):
     proxies = {'http':proxy_ip}
     headers = {'User-Agent': ua_now} 
     r= requests.get(url,proxies=proxies,headers=headers)
-    second=random.randint(1,5)
+    second=random.randint(1,3)
     time.sleep(0.1*second)
     return r
