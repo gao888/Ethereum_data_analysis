@@ -42,7 +42,7 @@ def tx_to_change(txdata):
     return data_total
 
 
-def get_tag(data):
+def get_tag(data,retailor_percentile=75):
     data_grouped = data.groupby(['account'])['date', 'amount'].apply(
         lambda x: x.sort_values(by='date', ascending=True))
     data_grouped['balance'] = data_grouped.groupby(
@@ -51,7 +51,7 @@ def get_tag(data):
         ['account'])['balance'].apply(lambda x: x.max())
     data_tag = pd.DataFrame(data_tag).reset_index()
     balance_list = data_tag['balance'].tolist()
-    retail_amount = np.percentile(balance_list, 75)
+    retail_amount = np.percentile(balance_list,retailor_percentile)
     retailor_list = data_tag[data_tag['balance']
                              <= retail_amount]['account'].tolist()
     return retailor_list
