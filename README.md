@@ -1,2 +1,4 @@
-# eth_visual
-#use data in Etherscan to do some analysis
+#now you can
+
+1.harvest raw data form Etherscan
+2.get daily balance of addresses
