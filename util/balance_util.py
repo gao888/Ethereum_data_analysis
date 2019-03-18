@@ -1,64 +1,94 @@
 import os
 import pandas as pd
 import datetime
+import numpy as np
 
-def getEveryDay(begin_date,end_date):
+
+def getEveryDay(begin_date, end_date):
     begin_date = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
-    end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
-    periods=(datetime_end-datetime_begin).days
-    dates=pd.date_range(date_start, periods=periods+1, freq='D')
-    date_list=dates.to_native_types().tolist()
+    end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    periods = (end_date-begin_date).days
+    dates = pd.date_range(begin_date, periods=periods+1, freq='D')
+    date_list = dates.to_native_types().tolist()
     return date_list
 
-def fill(num):
-    if pd.isna(num)==True:
+
+def fill(number):
+    if pd.isna(number) == True:
         return 0
     else:
-        return num
+        return number
+
+
+def modify_amount(num_string):
+    num_string = num_string.replace(',', '')
+    num = float(num_string)
+    return num
+
 
 def tx_to_change(txdata):
-    subdata_from=txdata.loc[:,['from','amount','date']]
-    subdata_from['amount']=-subdata_from['amount']
-    subdata_from=subdata_from.rename(index=str, columns={'from': 'account'})
-    subdata_to=txdata.loc[:,['to','amount','date']]
-    subdata_to=subdata_to.rename(index=str, columns={'to': 'account'})
-    data_total=subdata_from.append(subdata_to)
-    data_total=data_total.groupby(['account','date'])['amount'].agg(sum)
-    data_total=pd.DataFrame(data_total)
+    txdata['amount'] = txdata['amount'].apply(modify_amount)
+    subdata_from = txdata.loc[:, ['from_address', 'amount', 'date']]
+    subdata_from['amount'] = -subdata_from['amount']
+    subdata_from = subdata_from.rename(
+        index=str, columns={'from_address': 'account'})
+    subdata_to = txdata.loc[:, ['to_address', 'amount', 'date']]
+    subdata_to = subdata_to.rename(
+        index=str, columns={'to_address': 'account'})
+    data_total = subdata_from.append(subdata_to)
+    data_total = data_total.groupby(['account', 'date'])['amount'].agg(sum)
+    data_total = pd.DataFrame(data_total)
+    data_total = data_total.reset_index()
     return data_total
 
-def get_tag(change_data):
-    result=change_data.groupby(['account'])['amount'].apply(max)
-    return result
+
+def get_tag(data):
+    data_grouped = data.groupby(['account'])['date', 'amount'].apply(
+        lambda x: x.sort_values(by='date', ascending=True))
+    data_grouped['balance'] = data_grouped.groupby(
+        ['account'])['amount'].apply(lambda x: x.cumsum())
+    data_tag = data_grouped.groupby(
+        ['account'])['balance'].apply(lambda x: x.max())
+    data_tag = pd.DataFrame(data_tag).reset_index()
+    balance_list = data_tag['balance'].tolist()
+    retail_amount = np.percentile(balance_list, 75)
+    retailor_list = data_tag[data_tag['balance']
+                             <= retail_amount]['account'].tolist()
+    return retailor_list
 
 
+def get_retailor(retailor_list, data):
+    data['account'] = data['account'].map(
+        lambda x: 'retailor' if x in retailor_list else x)
+    data = pd.DataFrame(data.groupby(['account', 'date'])[
+                        'amount'].agg(sum)).reset_index()
+    return data
 
-def balance_visual(tokenpath,tagpath,tokennum=1):
-    T=pd.read_csv(tagpath)  
-    taglist=T.loc[:,'tag'].tolist()
 
-    R1=pd.read_csv(tokenpath)
-    timelist=R1.loc[:,'date'].tolist()
-    end=max(timelist)
-    begin=min(timelist)
+def full_day(data):
+    dict_this = {'account': [], 'date': []}
+    date_list = getEveryDay(data.date.min(), data.date.max())
+    accounts = set(data.account.tolist())
+    for account in accounts:
+        for date in date_list:
+            dict_this['date'].append(date)
+            dict_this['account'].append(account)
+    full_day = pd.DataFrame(dict_this)
+    return full_day
 
-    taglist=list(set(taglist))
-    dict2={'account':[],'date':[]}
-    # for tag in taglist:
-    #     for time in getEveryDay(str(begin),str(end)):
-    #         dict2['date'].append(time[0:4]+'-'+time[5:7]+'-'+time[8:10])
-    #         dict2['account'].append(tag)
-    # Final=pd.DataFrame(dict2)
 
-    Merge=pd.merge(R1, T, how='left', on='account')
-    Merge=Merge.groupby(['tag', 'date'])['daychange'].sum().reset_index()
-    Merge['account']=Merge['tag']
-
-    Merge2=pd.merge(Final,Merge, how='left', on=['account','date'])
-    Merge2=Merge2.sort_values(by='date')
-    Merge2['daychange']=Merge2['daychange'].apply(fill)
-    Merge2['dailybalance'] = Merge2.groupby(['account'])['daychange'].apply(lambda x: x.cumsum())
-    Merge2.loc[:,'dailybalance']=Merge2.loc[:,'dailybalance'].map(int)       
-    Merge2['percent']=Merge2['dailybalance']/tokennum
-    outpath=tokenpath[:-4]+'_visual.csv'
-    Merge2.to_csv(outpath,index=False,sep=',')
+def main(txdata):
+    data = tx_to_change(txdata)
+    retailor_list = get_tag(data)
+    data = get_retailor(retailor_list, data)
+    full_list = full_day(data)
+    full_list = pd.merge(full_list, data, how='left', on=[
+                         'account', 'date']).fillna(0)
+    full_list = full_list.groupby(['account'])['date', 'amount'].apply(
+        lambda x: x.sort_values(by='date', ascending=True))
+    full_list['balance'] = full_list.groupby(
+        ['account'])['amount'].apply(lambda x: x.cumsum())
+    full_list = full_list.reset_index()
+    full_list = full_list.reindex(columns=['account', 'date', 'balance'])
+    full_list = full_list.drop(full_list[full_list['balance'] == 0].index)
+    return full_list
