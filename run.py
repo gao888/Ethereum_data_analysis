@@ -1,6 +1,6 @@
 from util import doc_util as doc
 from util import spider_util as sp
-
+from util import balance_util as ba
 token_name='SeeleToken'
 token_address='0xb1eef147028e9f480dbc5ccaa3277d417d1b85f0'
 
@@ -8,11 +8,18 @@ token_address='0xb1eef147028e9f480dbc5ccaa3277d417d1b85f0'
 table=sp.main(token_address)
 
 #save all transactions
-filename=token_name+'_tx'
-doc.savecsv(table,filename)
+doc.savecsv(table,token_name+'_tx')
 
 #load all transactions
-totaltx=doc.loadcsv(filename)
+totaltx=doc.loadcsv(token_name+'_tx')
+
+#get daily balance
+balance=ba.main(totaltx)
+doc.savecsv(table,token_name+'_balance')
+
+
+
+
 
 #get all hashs of token
 # hashs=es.get_hash_all(token_address)
